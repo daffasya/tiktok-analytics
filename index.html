@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TikTok Shop Analytics Dashboard</title>
+  <!-- Tailwind CSS & Chart.js via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col">
+
+  <!-- Header Bar -->
+  <header class="bg-white border-b border-gray-200 px-6 py-4 flex flex-wrap justify-between items-center shadow-sm sticky top-0 z-30">
+    <div class="flex items-center space-x-3">
+      <div class="bg-black text-white p-2 rounded-lg font-bold text-xl">🎵</div>
+      <div>
+        <h1 class="text-xl font-bold text-gray-900">TikTok Shop Analytics</h1>
+        <p class="text-xs text-gray-500">Sales & Traffic Dashboard Analysis (Per Tanggal)</p>
+      </div>
+    </div>
+    
+    <!-- Date Picker & Actions -->
+    <div class="flex items-center space-x-3 mt-3 sm:mt-0">
+      <div class="flex items-center bg-gray-100 border border-gray-300 rounded-lg px-3 py-1.5 text-sm">
+        <span class="mr-2 text-gray-500">📅 Tanggal:</span>
+        <input type="date" id="selected-date" class="bg-transparent font-semibold focus:outline-none text-gray-800" onchange="loadDateData()">
+      </div>
+      <button onclick="openModal()" class="bg-rose-600 hover:bg-rose-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition shadow">
+        + Input / Edit Data
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Area -->
+  <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+    
+    <!-- Left Dashboard Area -->
+    <main class="flex-1 p-6 overflow-y-auto space-y-6">
+      
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <p class="text-xs font-semibold text-gray-500 uppercase">Total GMV</p>
+          <p id="kpi-gmv" class="text-xl font-bold text-rose-600 mt-1">Rp 0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <p class="text-xs font-semibold text-gray-500 uppercase">Visitors</p>
+          <p id="kpi-visitor" class="text-xl font-bold text-gray-900 mt-1">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <p class="text-xs font-semibold text-gray-500 uppercase">Orders</p>
+          <p id="kpi-order" class="text-xl font-bold text-gray-900 mt-1">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <p class="text-xs font-semibold text-gray-500 uppercase">Conversion Rate</p>
+          <p id="kpi-cr" class="text-xl font-bold text-emerald-600 mt-1">0.00%</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+          <p class="text-xs font-semibold text-gray-500 uppercase">Avg Order Value</p>
+          <p id="kpi-aov" class="text-xl font-bold text-blue-600 mt-1">Rp 0</p>
+        </div>
+      </div>
+
+      <!-- Channel Breakdown Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Self Sales -->
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4">
+          <div class="flex justify-between items-center border-b pb-3">
+            <h2 class="font-bold text-gray-800 flex items-center gap-2">👤 Self Sales Breakdown</h2>
+            <span id="self-total" class="text-sm font-bold text-rose-600">Rp 0</span>
+          </div>
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Self Livestream</span>
+              <span id="self-live" class="font-semibold">Rp 0</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Self Short Video</span>
+              <span id="self-video" class="font-semibold">Rp 0</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Self Product Card</span>
+              <span id="self-card" class="font-semibold">Rp 0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Affiliate Sales -->
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4">
+          <div class="flex justify-between items-center border-b pb-3">
+            <h2 class="font-bold text-gray-800 flex items-center gap-2">🤝 Affiliate Sales Breakdown</h2>
+            <span id="aff-total" class="text-sm font-bold text-indigo-600">Rp 0</span>
+          </div>
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Affiliate Livestream</span>
+              <span id="aff-live" class="font-semibold">Rp 0</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Affiliate Short Video</span>
+              <span id="aff-video" class="font-semibold">Rp 0</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Affiliate Product Card</span>
+              <span id="aff-card" class="font-semibold">Rp 0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts & Top Products -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Bar Chart -->
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+          <h3 class="font-bold text-gray-800 mb-4">Perbandingan Self vs Affiliate</h3>
+          <div class="h-60">
+            <canvas id="channelChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Top 5 Products -->
+        <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+          <h3 class="font-bold text-gray-800 mb-4">🔥 Top 5 Products</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600">
+              <thead class="bg-gray-50 text-gray-700 text-xs uppercase border-b">
+                <tr>
+                  <th class="py-2.5 px-3">#</th>
+                  <th class="py-2.5 px-3">Nama Produk</th>
+                  <th class="py-2.5 px-3 text-right">GMV</th>
+                </tr>
+              </thead>
+              <tbody id="top-products-body" class="divide-y">
+                <!-- JS populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- AI Chat Panel Right -->
+    <aside class="w-full lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-[500px] lg:h-auto">
+      <div class="p-4 border-b border-gray-200 bg-rose-50 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="text-lg">🤖</span>
+          <h3 class="font-bold text-rose-900 text-sm">AI Data Analyst Assistant</h3>
+        </div>
+        <span class="bg-rose-200 text-rose-800 text-[10px] font-bold px-2 py-0.5 rounded">TikTok Expert</span>
+      </div>
+
+      <!-- Quick Buttons -->
+      <div class="p-3 border-b border-gray-100 bg-gray-50 flex gap-2 overflow-x-auto text-xs">
+        <button onclick="askAI('ringkasan')" class="whitespace-nowrap bg-white border border-gray-300 hover:bg-rose-50 hover:border-rose-300 text-gray-700 px-2.5 py-1 rounded-full transition">📊 Analisis Tanggal Ini</button>
+        <button onclick="askAI('saran')" class="whitespace-nowrap bg-white border border-gray-300 hover:bg-rose-50 hover:border-rose-300 text-gray-700 px-2.5 py-1 rounded-full transition">🚀 Taktik GMV</button>
+      </div>
+
+      <!-- Chat Messages -->
+      <div id="chat-box" class="flex-1 p-4 overflow-y-auto space-y-3 text-sm">
+        <div class="bg-gray-100 p-3 rounded-lg text-gray-800 max-w-[85%]">
+          Halo! Saya AI Analyst TikTok Shop Anda. Pilih tanggal di atas lalu tanyakan analisis data harian Anda!
+        </div>
+      </div>
+
+      <!-- Chat Input -->
+      <div class="p-3 border-t border-gray-200 flex gap-2">
+        <input type="text" id="chat-input" placeholder="Tanyakan analisis data..." class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" onkeydown="if(event.key==='Enter') sendCustomMessage()">
+        <button onclick="sendCustomMessage()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition">Kirim</button>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Modal Input Data -->
+  <div id="data-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="font-bold text-lg text-gray-900">Input Data Tanggal: <span id="modal-date-title" class="text-rose-600"></span></h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div>
+          <label class="block font-semibold mb-1">Visitor (Pengunjung)</label>
+          <input type="number" id="input-visitor" class="w-full border rounded p-2" value="0">
+        </div>
+        <div>
+          <label class="block font-semibold mb-1">Orders (Pesanan)</label>
+          <input type="number" id="input-order" class="w-full border rounded p-2" value="0">
+        </div>
+      </div>
+
+      <hr>
+
+      <h4 class="font-bold text-xs text-rose-600 uppercase">Self Sales (Rp)</h4>
+      <div class="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <label class="block mb-1">Livestream</label>
+          <input type="number" id="input-self-live" class="w-full border rounded p-2" value="0">
+        </div>
+        <div>
+          <label class="block mb-1">Short Video</label>
+          <input type="number" id="input-self-video" class="w-full border rounded p-2" value="0">
+        </div>
+        <div>
+          <label class="block mb-1">Product Card</label>
+          <input type="number" id="input-self-card" class="w-full border rounded p-2" value="0">
+        </div>
+      </div>
+
+      <h4 class="font-bold text-xs text-indigo-600 uppercase">Affiliate Sales (Rp)</h4>
+      <div class="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <label class="block mb-1">Livestream</label>
+          <input type="number" id="input-aff-live" class="w-full border rounded p-2" value="0">
+        </div>
+        <div>
+          <label class="block mb-1">Short Video</label>
+          <input type="number" id="input-aff-video" class="w-full border rounded p-2" value="0">
+        </div>
+        <div>
+          <label class="block mb-1">Product Card</label>
+          <input type="number" id="input-aff-card" class="w-full border rounded p-2" value="0">
+        </div>
+      </div>
+
+      <hr>
+
+      <h4 class="font-bold text-xs text-gray-700 uppercase">Top 5 Products (Nama & GMV Rp)</h4>
+      <div id="top-products-inputs" class="space-y-2 text-xs">
+        <!-- 5 Rows -->
+      </div>
+
+      <div class="pt-4 flex justify-end gap-2">
+        <button onclick="closeModal()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">Batal</button>
+        <button onclick="saveData()" class="px-4 py-2 text-sm bg-rose-600 text-white rounded hover:bg-rose-700 font-medium">Simpan Data</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // System State
+    let database = JSON.parse(localStorage.getItem('tiktok_store_db')) || {};
+    let chartInstance = null;
+
+    // Set today as default date
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('selected-date').value = todayStr;
+
+    function formatRp(num) {
+      return 'Rp ' + (num || 0).toLocaleString('id-ID');
+    }
+
+    function getSelectedDate() {
+      return document.getElementById('selected-date').value || todayStr;
+    }
+
+    function loadDateData() {
+      const dateKey = getSelectedDate();
+      const defaultData = {
+        visitor: 0, order: 0,
+        selfLive: 0, selfVideo: 0, selfCard: 0,
+        affLive: 0, affVideo: 0, affCard: 0,
+        topProducts: [
+          { name: "Produk A", gmv: 0 },
+          { name: "Produk B", gmv: 0 },
+          { name: "Produk C", gmv: 0 },
+          { name: "Produk D", gmv: 0 },
+          { name: "Produk E", gmv: 0 }
+        ]
+      };
+
+      const data = database[dateKey] || defaultData;
+
+      const selfTotal = (data.selfLive || 0) + (data.selfVideo || 0) + (data.selfCard || 0);
+      const affTotal = (data.affLive || 0) + (data.affVideo || 0) + (data.affCard || 0);
+      const totalGMV = selfTotal + affTotal;
+      const cr = data.visitor > 0 ? ((data.order / data.visitor) * 100).toFixed(2) : '0.00';
+      const aov = data.order > 0 ? Math.round(totalGMV / data.order) : 0;
+
+      // Update Screen
+      document.getElementById('kpi-gmv').innerText = formatRp(totalGMV);
+      document.getElementById('kpi-visitor').innerText = (data.visitor || 0).toLocaleString('id-ID');
+      document.getElementById('kpi-order').innerText = (data.order || 0).toLocaleString('id-ID');
+      document.getElementById('kpi-cr').innerText = cr + '%';
+      document.getElementById('kpi-aov').innerText = formatRp(aov);
+
+      document.getElementById('self-total').innerText = formatRp(selfTotal);
+      document.getElementById('self-live').innerText = formatRp(data.selfLive);
+      document.getElementById('self-video').innerText = formatRp(data.selfVideo);
+      document.getElementById('self-card').innerText = formatRp(data.selfCard);
+
+      document.getElementById('aff-total').innerText = formatRp(affTotal);
+      document.getElementById('aff-live').innerText = formatRp(data.affLive);
+      document.getElementById('aff-video').innerText = formatRp(data.affVideo);
+      document.getElementById('aff-card').innerText = formatRp(data.affCard);
+
+      // Render Top Products Table
+      const tbody = document.getElementById('top-products-body');
+      tbody.innerHTML = '';
+      (data.topProducts || []).forEach((p, idx) => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-gray-50">
+            <td class="py-2 px-3 font-bold text-gray-400">${idx + 1}</td>
+            <td class="py-2 px-3 font-medium text-gray-800">${p.name || '-'}</td>
+            <td class="py-2 px-3 text-right font-bold text-rose-600">${formatRp(p.gmv)}</td>
+          </tr>
+        `;
+      });
+
+      updateChart(data);
+    }
+
+    function updateChart(data) {
+      const ctx = document.getElementById('channelChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Livestream', 'Short Video', 'Product Card'],
+          datasets: [
+            { label: 'Self Sales', data: [data.selfLive || 0, data.selfVideo || 0, data.selfCard || 0], backgroundColor: '#e11d48' },
+            { label: 'Affiliate Sales', data: [data.affLive || 0, data.affVideo || 0, data.affCard || 0], backgroundColor: '#4f46e5' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    function openModal() {
+      const dateKey = getSelectedDate();
+      document.getElementById('modal-date-title').innerText = dateKey;
+      const data = database[dateKey] || {};
+
+      document.getElementById('input-visitor').value = data.visitor || 0;
+      document.getElementById('input-order').value = data.order || 0;
+      document.getElementById('input-self-live').value = data.selfLive || 0;
+      document.getElementById('input-self-video').value = data.selfVideo || 0;
+      document.getElementById('input-self-card').value = data.selfCard || 0;
+      document.getElementById('input-aff-live').value = data.affLive || 0;
+      document.getElementById('input-aff-video').value = data.affVideo || 0;
+      document.getElementById('input-aff-card').value = data.affCard || 0;
+
+      // Render Top Products Inputs
+      const container = document.getElementById('top-products-inputs');
+      container.innerHTML = '';
+      const products = data.topProducts || [{},{},{},{},{}];
+      for(let i=0; i<5; i++) {
+        const p = products[i] || { name: '', gmv: 0 };
+        container.innerHTML += `
+          <div class="flex gap-2">
+            <span class="py-1 font-bold">${i+1}.</span>
+            <input type="text" id="top-name-${i}" placeholder="Nama Produk" class="flex-1 border rounded p-1" value="${p.name || ''}">
+            <input type="number" id="top-gmv-${i}" placeholder="GMV (Rp)" class="w-28 border rounded p-1" value="${p.gmv || 0}">
+          </div>
+        `;
+      }
+
+      document.getElementById('data-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('data-modal').classList.add('hidden');
+    }
+
+    function saveData() {
+      const dateKey = getSelectedDate();
+      const topProds = [];
+      for(let i=0; i<5; i++) {
+        topProds.push({
+          name: document.getElementById(`top-name-${i}`).value || `Produk ${i+1}`,
+          gmv: Number(document.getElementById(`top-gmv-${i}`).value) || 0
+        });
+      }
+
+      database[dateKey] = {
+        visitor: Number(document.getElementById('input-visitor').value) || 0,
+        order: Number(document.getElementById('input-order').value) || 0,
+        selfLive: Number(document.getElementById('input-self-live').value) || 0,
+        selfVideo: Number(document.getElementById('input-self-video').value) || 0,
+        selfCard: Number(document.getElementById('input-self-card').value) || 0,
+        affLive: Number(document.getElementById('input-aff-live').value) || 0,
+        affVideo: Number(document.getElementById('input-aff-video').value) || 0,
+        affCard: Number(document.getElementById('input-aff-card').value) || 0,
+        topProducts: topProds
+      };
+
+      localStorage.setItem('tiktok_store_db', JSON.stringify(database));
+      closeModal();
+      loadDateData();
+      addChatMessage('ai', `✅ Data untuk tanggal ${dateKey} berhasil disimpan!`);
+    }
+
+    function addChatMessage(sender, text) {
+      const box = document.getElementById('chat-box');
+      const isUser = sender === 'user';
+      const msgDiv = document.createElement('div');
+      msgDiv.className = isUser 
+        ? 'bg-rose-600 text-white p-3 rounded-lg ml-auto max-w-[85%] text-sm' 
+        : 'bg-gray-100 text-gray-800 p-3 rounded-lg max-w-[85%] text-sm whitespace-pre-line';
+      msgDiv.innerText = text;
+      box.appendChild(msgDiv);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function askAI(type) {
+      const dateKey = getSelectedDate();
+      const data = database[dateKey];
+
+      if (!data) {
+        addChatMessage('user', 'Analisis data tanggal ini.');
+        addChatMessage('ai', `⚠️ Belum ada data untuk tanggal ${dateKey}. Silakan klik tombol "+ Input / Edit Data" untuk memasukkan data lebih dulu.`);
+        return;
+      }
+
+      const selfTotal = (data.selfLive||0) + (data.selfVideo||0) + (data.selfCard||0);
+      const affTotal = (data.affLive||0) + (data.affVideo||0) + (data.affCard||0);
+      const totalGMV = selfTotal + affTotal;
+
+      if (type === 'ringkasan') {
+        addChatMessage('user', `Minta ringkasan tanggal ${dateKey}`);
+        addChatMessage('ai', `📊 ANALISIS TANGGAL ${dateKey}:\n• Total GMV: ${formatRp(totalGMV)}\n• Visitor: ${(data.visitor||0).toLocaleString('id-ID')} | Orders: ${(data.visitor||0)}\n• Self vs Affiliate: ${formatRp(selfTotal)} vs ${formatRp(affTotal)}\n• Channel Terkuat: ${selfTotal > affTotal ? 'Self Sales' : 'Affiliate Sales'}`);
+      } else if (type === 'saran') {
+        addChatMessage('user', 'Berikan taktik GMV.');
+        addChatMessage('ai', `🚀 TAKTIK PENINGKATAN GMV:\n1. Dorong promosi pada produk "${data.topProducts[0]?.name || 'Utama'}" yang paling banyak menyumbang GMV.\n2. Tingkatkan kolaborasi Affiliate Short Video jika trafik organik Self menurun.`);
+      }
+    }
+
+    function sendCustomMessage() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      addChatMessage('user', text);
+      input.value = '';
+
+      setTimeout(() => {
+        addChatMessage('ai', `Berdasarkan pertanyaan Anda tentang "${text}", pastikan Anda terus memantau rasio konversi (CR%) dan memperbanyak stok produk terlaris Anda.`);
+      }, 500);
+    }
+
+    // Initialize Page
+    loadDateData();
+  </script>
+</body>
+</html>
